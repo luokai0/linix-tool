@@ -1,65 +1,60 @@
-# webget — Smart CLI Download & Scraping Tool
+# luowebget — Advanced Async HTTP Downloader & Scraper by luokai
 
-A powerful CLI tool for downloading files, extracting content, checking URLs, and mirroring pages.
-
-![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
+> Built from qget + aget + wget best features — pure Python, no dependencies on external tools
 
 ## Features
 
-- **download** — Download any file with progress bar + resume support
-- **extract** — Pull text/HTML/JSON content from any URL
-- **status** — Check HTTP status codes and basic headers
-- **headers** — Full response header inspection
-- **mirror** — Download all linked pages from a site
+- **Async multi-connection downloads** — split file into N chunks, download concurrently
+- **Resume support** — picks up partial downloads automatically
+- **Rate limiting** — avoid saturating bandwidth
+- **Batch URL checking** — status, latency, SSL expiry for 100s of URLs concurrently
 
-## Requirements
+
+- **Web scraping** — extract links, images, scripts from any HTML page
+- **Batch downloads** — download multiple files concurrently
+- **HTTP/2** by default for better performance
+
+## Installation
 
 ```bash
-pip3 install httpx
+pip install httpx aiofiles
 ```
 
 ## Usage
 
 ```bash
-# Download a file
-python3 webget.py download https://example.com/file.zip
+# Download a file (single connection)
+python3 luowebget.py download https://example.com/file.zip
 
-# Download with custom filename
-python3 webget.py download https://example.com/file.zip myfile.zip
+# Download with 8 concurrent connections
+python3 luowebget.py download https://example.com/file.zip -c 8
 
-# Extract visible text from a page
-python3 webget.py extract https://example.com
+# Check multiple URLs
+python3 luowebget.py check https://google.com https://github.com https://twitter.com
 
-# Extract JSON API response
-python3 webget.py extract https://api.example.com/data
+# Scrape a page
+python3 luowebget.py scrape https://news.ycombinator.com
 
-# Check if a URL is alive
-python3 webget.py status https://example.com
-
-# View all response headers
-python3 webget.py headers https://example.com
-
-# Mirror all links from a page
-python3 webget.py mirror https://example.com ./mirror/
+# Batch download
+python3 luowebget.py batch-download https://example.com/a.zip https://example.com/b.zip -d ./downloads/
 ```
 
-## Examples
+## Commands
 
-```bash
-# Download a large file (supports resume)
-python3 webget.py download https://releases.ubuntu.com/22.04/ubuntu-22.04.iso ubuntu.iso
+| Command | Description |
+|---------|-------------|
+| `download <url> [file]` | Download a file with resume + progress bar |
+| `check <urls...>` | Check URL health (status, latency, SSL) |
+| `scrape <url>` | Extract content, links, images from a page |
+| `batch-download <urls...>` | Download multiple files concurrently |
 
-# Scrape article text
-python3 webget.py extract https://news.ycombinator.com
+## Options
 
-# Check if your API is up
-python3 webget.py status https://api.yoursite.com/health
-
-# Debug a redirect chain
-python3 webget.py headers https://google.com
-```
-
-## License
-
-MIT — Free to use, modify, and distribute.
+- `-c, --connections N` — Number of concurrent connections (default: 8)
+- `-k, --chunk N` — Chunk size in bytes (default: 65536)
+- `-r, --retries N` — Max retries on failure (default: 3)
+- `-R, --rate N` — Rate limit in B/s (0 = unlimited)
+- `-H, --header "Name: value"` — Custom HTTP header
+- `-x, --proxy URL` — HTTP/SOCKS proxy
+- `-t, --timeout N` — Timeout in seconds (default: 60)
+- `--no-resume` — Start download from scratch
