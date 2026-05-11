@@ -1,105 +1,128 @@
-# luonetscan — Async Network Port Scanner + CVE Detector
+# luonetscan — Advanced Async Port Scanner by luokai
 
-> **luo**netscan — Built from the ground up inspired by porthawk & portfinder, with full service fingerprinting, CVE lookup, geo-IP, and colored output. Pure Python, zero heavy dependencies.
+> Built from porthawk, portfinder, and custom enhancements. Licensed under MIT.
 
 ## Features
 
-- ⚡ **Async TCP/UDP scanning** — up to 1000 concurrent connections
-- 🔍 **Service fingerprinting** — banner grabbing, SSH/MySQL/Redis version detection
-- 🔎 **CVE lookup** — live NVD API query with in-memory + disk cache
-- 🗺️ **Geo-IP + ASN lookup** — via ip-api.com (free, no key needed)
-- 🌐 **CIDR range expansion** — `10.0.0.0/24` → all hosts scanned
-- 📊 **Colored live output** — risk levels, state, latency per port
-- 📤 **JSON output** — for scripting and automation
-- 🎯 **Top-N port scan** — scan the 50 most common ports instantly
-- 🔄 **5 commands** — scan, top, deep, range, ping, cve
+| Feature | Description |
+|---------|-------------|
+| ⚡ **Async TCP/UDP scanning** | Up to 1000 concurrent connections |
+| 🔍 **Service fingerprinting** | Banner grabbing, SSH/MySQL/Redis version detection |
+| 🔎 **CVE lookup** | Live NVD API query with in-memory + disk cache |
+| 🗺️ **Geo-IP + ASN** | Via ip-api.com (free, no key needed) |
+| 🌐 **CIDR range expansion** | `10.0.0.0/24` → all hosts scanned |
+| 🕵️ **Honeypot detection** | Cowrie SSH, Dionaea FTP, ICS multi-port, latency uniformity |
+| 📊 **Live progress UI** | Colored real-time scan updates |
+| 📤 **Multi-format output** | JSON, CSV, HTML reports |
+| 🔄 **5 scan modes** | scan, top, deep, range, ping, cve, diff |
+| 🛡️ **Evasion techniques** | SYN, FIN, NULL, XMAS, ACK, Maimon scans |
+| 🎯 **OS detection** | TTL-based OS fingerprinting |
+| 📬 **Webhook alerts** | Slack + Discord for HIGH-risk port alerts |
+| 🧠 **ML-based port ordering** | Smart port order (needs scikit-learn) |
+| 📡 **Passive OS fingerprinting** | TCP option analysis |
+| 📊 **Scan diff** | Compare two scans for changes |
 
-## Installation
+## Quick Start
 
 ```bash
-# Clone the repo
-git clone https://github.com/luokai0/linix-tool.git
-cd linix-tool/tools/netscan
+# Scan common ports
+python3 luonetscan.py scan -t 192.168.1.1 -p 22,80,443
 
-# Or add to PATH
-chmod +x luonetscan.py
-sudo cp luonetscan.py /usr/local/bin/luonetscan
-```
-
-## Commands
-
-### scan — Scan hosts with custom ports
-```bash
-python3 luonetscan.py scan -t 192.168.1.1 -p 22,80,443,3306 --timeout 2
-python3 luonetscan.py scan -t 10.0.0.0/24 -p 80,443 --tcp --json
-```
-
-### top — Scan top-N most common ports
-```bash
+# Top 50 ports
 python3 luonetscan.py top -t github.com -n 50
-```
 
-### deep — Full port scan (1-65535)
-```bash
+# Full 1-65535 scan
 python3 luonetscan.py deep -t 192.168.1.1
-```
 
-### range — Scan IP range or CIDR
-```bash
-python3 luonetscan.py range -t 192.168.1.1-50 -p 1-1000
-python3 luonetscan.py range -t 10.0.0.0/24 -p 80,443
-```
+# With banners + CVE lookup
+python3 luonetscan.py scan -t github.com -p 22,80,443 --banners --cve
 
-### ping — Host info + geo + ASN
-```bash
+# Scan a network range
+python3 luonetscan.py range -t 192.168.1.1-50 -p 80,443
+
+# Host info + geo
 python3 luonetscan.py ping -t google.com
-```
 
-### cve — CVE lookup from NVD
-```bash
+# CVE lookup
 python3 luonetscan.py cve redis --version 6.0
-python3 luonetscan.py cve openssh
-```
-> Set `NVD_API_KEY` env var for higher rate limits (free at nvd.nist.gov)
 
-## Output Example
+# Compare scans
+python3 luonetscan.py diff scan_a.json scan_b.json
 
-```
-  22/tcp  OPEN    1.5ms  MEDIUM  ssh
-  80/tcp  OPEN    1.2ms  LOW    http
- 443/tcp  OPEN    1.3ms  LOW    https
-
-  Scanned 1 host(s) × 4 ports = 4 total
-  Open: 3  |  Closed: 0  |  Filtered: 1
+# Save as HTML report
+python3 luonetscan.py scan -t github.com -o html --json
 ```
 
-## Risk Levels
-
-| Color | Level | Meaning |
-|-------|-------|---------|
-| 🔴 Red | HIGH | Never expose to internet |
-| 🟡 Yellow | MEDIUM | Needs auth/TLS if public |
-| 🟢 Green | LOW | Standard web ports |
-| ⚪ Gray | INFO | Informational |
-
-## Dependencies
+## Options
 
 ```
-pip install httpx
+-t, --target HOST      Target IP/hostname/CIDR
+-p, --ports PORTS     Port spec: '22,80,443' or '1-1024'
+-n, --top-ports N     Scan top N most common ports [default: 50]
+--timeout SEC         Connection timeout [default: 1.0]
+--threads N            Max concurrent connections [default: 500]
+--banners             Grab service banners
+--cve                 Look up CVEs for open services via NVD API
+--os                  OS detection via TTL
+--json                Output results as JSON
+-o, --output FMT      Output format: json, csv, html
+--show-closed         Show closed/filtered ports
+--no-live             Disable live UI (for pipes/CI)
+--udp                 UDP scan mode
+--adaptive            Adaptive concurrency
+--stealth             Stealth mode: 1 thread, 3s timeout
+--honeypot            Score target for honeypot likelihood
+--slack-webhook URL   Slack webhook for HIGH-risk alerts
+--discord-webhook URL Discord webhook for HIGH-risk alerts
 ```
-httpx is the only dependency — everything else is stdlib.
 
 ## Compared to nmap
 
 | Feature | nmap | luonetscan |
 |---------|------|------------|
 | Speed | Fast | Fast (async) |
-| CVE lookup | External script | Built-in |
-| Geo-IP | External | Built-in |
-| Banner grab | -sV | Built-in + MySQL/Redis/SSH |
-| JSON output | -oJ | Native --json |
-| Dependencies | None | httpx only |
+| CVE lookup | External script | ✅ Built-in |
+| Geo-IP/ASN | External | ✅ Built-in |
+| Service fingerprint | -sV | ✅ Built-in |
+| Honeypot detection | ❌ | ✅ Built-in |
+| Banner grab | ❌ | ✅ SSH/MySQL/Redis |
+| JSON/CSV/HTML output | ✅ | ✅ All three |
 | Pure Python | ❌ | ✅ |
+| No dependencies | ❌ | ✅ (httpx + rich = optional) |
 
-Author: luo kai | linix-tool
-MIT License
+## Dependencies
+
+```bash
+pip install httpx rich
+```
+httpx is the only hard dependency — everything else uses Python stdlib.
+Rich is optional (used only for HTTP header grabbing).
+
+## Risk Levels
+
+| Color | Level | Meaning |
+|-------|-------|---------|
+| 🔴 | HIGH | Never expose to internet |
+| 🟡 | MEDIUM | Needs auth/TLS if public |
+| 🟢 | LOW | Standard web ports |
+| ⚪ | INFO | Informational |
+
+## Honeypot Detection
+
+luonetscan detects these honeypot signatures:
+- **Cowrie SSH** — Known Cowrie default SSH banners
+- **Dionaea FTP** — Synology FTP banner from Dionaea honeypot
+- **ICS multi-port** — Multiple ICS/SCADA ports = Conpot signature
+- **Port flood** — >20 open ports unusual on real hosts
+- **Uniform latency** — Suspiciously uniform response times
+
+## Set NVD_API_KEY
+
+For higher CVE lookup rate limits:
+```bash
+export NVD_API_KEY=your_key_here
+```
+
+Get a free key at: https://nvd.nist.gov/developers/request-an-api-key
+
+Author: **luokai** | MIT License
